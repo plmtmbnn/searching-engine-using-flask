@@ -44,10 +44,13 @@ def main():
         print("\n--- %s seconds ---" % (time.time() - start_time))
 
 def getDocumentContent(path):
+    print path
     content = ""
     if(path.rfind(".pdf") == len(path) - 4):
         p = file(path, "rb")
         pdf_content = PyPDF2.PdfFileReader(p)
+        if pdf_content.isEncrypted:
+            pdf_content.decrypt('')
         for i in range(0, pdf_content.numPages):
             content += pdf_content.getPage(i).extractText() + "\n"
         content = " ".join(content.replace(u"\xa0", " ").strip().split())
@@ -115,6 +118,13 @@ def initialize_terms_and_postings():
                                                    # term in the
                                                    # document
 
+def initialize_document_frequencies():
+    """For each term in the dictionary, count the number of documents
+    it appears in, and store the value in document_frequncy[term]."""
+    global document_frequency
+    for term in dictionary:
+        document_frequency[term] = len(postings[term])
+
 def inverse_document_frequency(term):
     """Returns the inverse document frequency of term.  Note that if
     term isn't in the dictionary then it returns 0, by convention."""
@@ -131,13 +141,6 @@ def imp(term,id):
     else:
         return 0.0
 
-def initialize_document_frequencies():
-    """For each term in the dictionary, count the number of documents
-    it appears in, and store the value in document_frequncy[term]."""
-    global document_frequency
-    for term in dictionary:
-        document_frequency[term] = len(postings[term])
-
 def initialize_lengths():
     """Computes the length for each document."""
     global length
@@ -151,7 +154,7 @@ def do_search(queries):
     """Asks the user what they would like to search for, and returns a
     list of relevant documents, in decreasing order of cosine
     similarity."""
-    global documents, error, list_document
+    global documents, list_document
     results = {}
     query = tokenize(queries)
     if query == []:
@@ -202,7 +205,7 @@ class ReusableForm(Form):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    global documents, error, list_document
+    global documents, list_document
     form = ReusableForm(request.form)
     print form.errors
     main()

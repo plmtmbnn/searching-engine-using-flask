@@ -1,0 +1,70 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+
+
+<div class="container">
+	<div class="row">
+			<img src="{{url_for('static',filename='Lului-small.png')}}" height="70" width="175" class="img-responsive center-block">
+		<br>
+
+		<div id="custom-search-input">
+			<form  action="" method="POST" role="form">
+				{{ form.csrf }}
+				<div class="input-group col-md-12">
+					<input type="text" class="form-control input-lg" id="query" name="query" placeholder="Search..." />
+					<span class="input-group-btn">
+						<button class="btn btn-info btn-lg" type="submit">
+							<i class="glyphicon glyphicon-search"></i>
+						</button>
+					</span>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<br>
+	{% with messages = get_flashed_messages(with_categories=true) %}
+	{% if messages %}
+
+	{% for message in messages %}
+	{% if "empty" not in message[1] and "Error" not in message[1] and "Total" not in message[1]: %}
+	<div class="row">
+		<div class="alert btn-default" role="alert">
+			<a href="/download/{{ message[1] }}" class="alert-link" target="_blank">{{ message[1] }}</a>
+		</div>
+	</div>
+	{% elif "empty" in message[1]: %}
+	<div class="alert alert-warning">
+		<span class="glyphicon glyphicon-exclamation-sign"></span>
+		Poor you, nothing is found bro!
+	</div>
+	{% elif "Total document found" in message[1]: %}
+	<div class="alert-default center-block">
+		<span class="glyphicon glyphicon-exclamation-sign"></span>
+		{{ message[1] }}
+	</div>
+	<br>
+	{% endif %}
+
+	{% if "Error" in message[1]: %}
+	<div class="alert alert-danger">
+		<span class="glyphicon glyphicon-exclamation-sign"></span>
+		{{ message[1] }}
+	</div>
+	{% endif %}
+	{% endfor %}
+	{% endif %}
+	{% endwith %}
+
+
+</div>
+<br/>
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+{% endblock %}

@@ -11,13 +11,14 @@ from docx import Document
 from pptx import Presentation
 from operator import itemgetter
 
-
 DEBUG = True
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config['SECRET_KEY'] = '7d441f27d441f27567d441f2b6176a'
 Bootstrap(app)
 
+list_document = []
+documents = {}
 total_document_found = 0
 file_type = [".pdf",".txt",".docx",".pptx"]
 document_filenames = {}
@@ -35,12 +36,12 @@ def main():
     if not is_main_function_had_called:
         start_time = time.time()
         read_driver("E:\\")
-        print("\n--- %s seconds ---" % (time.time() - start_time))
         initialize_terms_and_postings()
         initialize_document_frequencies()
         initialize_lengths()
         is_main_function_had_called = True
         print N
+        print("\n--- %s seconds ---" % (time.time() - start_time))
 
 def getDocumentContent(path):
     content = ""
@@ -150,7 +151,8 @@ def do_search(queries):
     """Asks the user what they would like to search for, and returns a
     list of relevant documents, in decreasing order of cosine
     similarity."""
-    results = []
+    global documents, error, list_document
+    results = {}
     query = tokenize(queries)
     if query == []:
         sys.exit()
@@ -159,6 +161,8 @@ def do_search(queries):
     relevant_document_ids = intersection(
             [set(postings[term].keys()) for term in query])
     if not relevant_document_ids:
+        documents.clear()
+        list_document[:] = []
         flash('empty')
     else:
         scores = sorted([(id,similarity(query,id))
@@ -170,9 +174,9 @@ def do_search(queries):
         total_document_found = 0
         for (id,score) in scores:
             print str(score)+": "+document_filenames[id]
-            results.append(document_filenames[id])
+            results[document_filenames[id]] = score
             total_document_found += 1
-        flash("Total document found : " + str(total_document_found))
+        flash("Total document found : " + str(total_document_found) + " of " + str(N))
     return results
 
 def intersection(sets):
@@ -198,18 +202,27 @@ class ReusableForm(Form):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    global documents, error, list_document
     form = ReusableForm(request.form)
     print form.errors
     main()
     if request.method == 'POST':
         query=request.form['query']
         if form.validate():
-            for value in do_search(query):
-                flash(value)
+            documents.clear()
+            list_document[:] = []
+            for key, value in sorted(do_search(query).items(), key = itemgetter(1), reverse=True):
+                documents[key] = value
+                list_document.append(key)
+                print key," => ",value
         else:
-            flash('Error: The search field is cannot be blank. ')
-
-    return render_template('index.html', form=form)
+            documents.clear()
+            list_document[:] = []
+            flash('Error: The search field is cannot be blank.')
+    else:
+         documents.clear()
+         list_document[:] = []
+    return render_template('index.html', form=form, documents = documents, list_document =list_document)
 
 @app.route('/download/<path:filename>', methods=['GET'])
 def download(filename):

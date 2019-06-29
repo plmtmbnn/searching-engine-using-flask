@@ -135,7 +135,7 @@ def inverse_document_frequency(term):
 
 def imp(term,id):
     """Returns the importance of term in document id.  If the term
-    isn't in the document, then return 0."""
+    isn't in the document, then return 0."""""
     if id in postings[term]:
         return postings[term][id]*inverse_document_frequency(term)
     else:
